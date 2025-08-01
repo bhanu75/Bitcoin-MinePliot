@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitcoin Mine Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 0 10px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-online {
+            background: #4CAF50;
+        }
+
+        .status-offline {
+            background: #f44336;
+        }
+
+        .status-warning {
+            background: #FF9800;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .card-icon {
+            font-size: 1.5em;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .metric-value {
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .temp-gauge {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .temp-bar {
+            height: 100%;
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+
+        .temp-normal {
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+        }
+
+        .temp-warning {
+            background: linear-gradient(90deg, #FF9800, #FFC107);
+        }
+
+        .temp-critical {
+            background: linear-gradient(90deg, #f44336, #FF5722);
+        }
+
+        .alerts-section {
+            margin-top: 30px;
+        }
+
+        .alert {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .alert-warning {
+            background: rgba(255, 152, 0, 0.2);
+            border-left-color: #FF9800;
+        }
+
+        .alert-error {
+            background: rgba(244, 67, 54, 0.2);
+            border-left-color: #f44336;
+        }
+
+        .alert-info {
+            background: rgba(33, 150, 243, 0.2);
+            border-left-color: #2196F3;
+        }
+
+        .log-section {
+            margin-top: 30px;
+        }
+
+        .log-entry {
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.9em;
+            border-left: 3px solid #2196F3;
+        }
+
+        .controls-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .control-button {
+            background: linear-gradient(45deg, #2196F3, #21CBF3);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .control-button:hover {
+            background: linear-gradient(45deg, #1976D2, #0277BD);
+            transform: translateY(-2px);
+        }
+
+        .control-button.danger {
+            background: linear-gradient(45deg, #f44336, #FF5722);
+        }
+
+        .control-button.danger:hover {
+            background: linear-gradient(45deg, #D32F2F, #E64A19);
+        }
+
+        .control-button.success {
+            background: linear-gradient(45deg, #4CAF50, #8BC34A);
+        }
+
+        .control-button.success:hover {
+            background: linear-gradient(45deg, #388E3C, #689F38);
+        }
+
+        .last-updated {
+            text-align: center;
+            margin-top: 30px;
+            opacity: 0.8;
+            font-size: 0.9em;
+        }
+
+        .power-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 10px;
+            animation: blink 1.5s infinite;
+        }
+
+        .power-on {
+            background: #4CAF50;
+            box-shadow: 0 0 10px #4CAF50;
+        }
+
+        .power-off {
+            background: #f44336;
+            box-shadow: 0 0 10px #f44336;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .trend-chart {
+            width: 100%;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            margin-top: 15px;
+            padding: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>🏭 Bitcoin Mine Control Center</h1>
+            <div id="system-status">
+                <span class="status-indicator status-online">SYSTEM ONLINE</span>
+                <span class="status-indicator" id="power-status">POWER AVAILABLE</span>
+                <span class="status-indicator" id="miners-status">MINERS ACTIVE</span>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Power & Mining Status -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">⚡ Power & Mining</span>
+                    <span class="card-icon" id="power-icon">🟢</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Power Signal</span>
+                    <span class="metric-value" id="power-signal">
+                        Available <div class="power-indicator power-on"></div>
+                    </span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Miners Status</span>
+                    <span class="metric-value" id="miners-active">Active</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Miner Wattage</span>
+                    <span class="metric-value" id="miner-wattage">0 W</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Last Action</span>
+                    <span class="metric-value" id="last-action">System startup</span>
+                </div>
+            </div>
+
+            <!-- Temperature Monitoring -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">🌡️ Temperature</span>
+                    <span class="card-icon" id="temp-icon">🟢</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Room Temperature</span>
+                    <span class="metric-value" id="room-temp">25.0°C</span>
+                </div>
+                <div class="temp-gauge">
+                    <div class="temp-bar temp-normal" id="temp-bar" style="width: 50%"></div>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Humidity</span>
+                    <span class="metric-value" id="room-humidity">45%</span>
+                </div>
+                <div class="trend-chart">
+                    <div class="chart-placeholder">Temperature Trend (24h)</div>
+                </div>
+            </div>
+
+            <!-- Fan System -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">💨 Fan System</span>
+                    <span class="card-icon" id="fan-icon">🟢</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Fans Status</span>
+                    <span class="metric-value" id="fans-active">Auto</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Fan Wattage</span>
+                    <span class="metric-value" id="fan-wattage">0 W</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Active Fans</span>
+                    <span class="metric-value" id="active-fans">0/9</span>
+                </div>
+            </div>
+
+            <!-- System Health -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">💚 System Health</span>
+                    <span class="card-icon" id="health-icon">🟢</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Uptime</span>
+                    <span class="metric-value" id="uptime">Running</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Loop Interval</span>
+                    <span class="metric-value" id="loop-interval">2 min</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Active Alerts</span>
+                    <span class="metric-value" id="active-alerts">0</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Last Heartbeat</span>
+                    <span class="metric-value" id="last-heartbeat">Just now</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts Section -->
+        <div class="alerts-section">
+            <h2>🚨 Active Alerts</h2>
+            <div id="alerts-container">
+                <div class="alert alert-info">
+                    <strong>System Status:</strong> All systems operational. Monitoring active.
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls Section (Debug Mode) -->
+        <div class="controls-section" id="debug-controls" style="display: none;">
+            <h2>🔧 Debug Controls</h2>
+            <div class="control-group">
+                <label class="control-label">Miner Control:</label>
+                <button class="control-button success" onclick="controlMiners(true)">Start Miners</button>
+                <button class="control-button danger" onclick="controlMiners(false)">Stop Miners</button>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Fan Control:</label>
+                <button class="control-button" onclick="controlFans('all')">All Fans On</button>
+                <button class="control-button" onclick="controlFans('half')">Half Fans</button>
+                <button class="control-button" onclick="controlFans('off')">All Fans Off</button>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Test Functions:</label>
+                <button class="control-button" onclick="sendTestAlert()">Test Alert</button>
+                <button class="control-button" onclick="forceRefresh()">Force Refresh</button>
+            </div>
+        </div>
+
+        <!-- Recent Log Entries -->
+        <div class="log-section">
+            <h2>📋 Recent Activity Log</h2>
+            <div id="log-container">
+                <div class="log-entry">[INFO] System initialized successfully</div>
+                <div class="log-entry">[INFO] All sensors responding normally</div>
+                <div class="log-entry">[INFO] Miners started - power signal available</div>
+            </div>
+        </div>
+
+        <div class="last-updated">
+            Last Updated: <span id="last-updated-time">Loading...</span>
+            <button class="control-button" onclick="toggleDebugMode()" style="margin-left: 20px;">Toggle Debug</button>
+        </div>
+    </div>
+
+    <script>
+        let debugMode = false;
+        let dashboardData = {};
+
+        // Initialize dashboard
+        function initDashboard() {
+            loadDashboardData();
+            setInterval(loadDashboardData, 30000); // Refresh every 30 seconds
+            updateLastRefreshTime();
+        }
+
+        // Load dashboard data from JSON file
+        async function loadDashboardData() {
+            try {
+                const response = await fetch('dashboard_data.json');
+                dashboardData = await response.json();
+                updateDashboard();
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                showConnectionError();
+            }
+        }
+
+        // Update dashboard with current data
+        function updateDashboard() {
+            const state = dashboardData.current_state;
+            
+            if (!state) return;
+
+            // Update power and mining status
+            document.getElementById('power-signal').innerHTML = 
+                state.power_signal ? 
+                'Available <div class="power-indicator power-on"></div>' : 
+                'Curtailed <div class="power-indicator power-off"></div>';
+            
+            document.getElementById('miners-active').textContent = 
+                state.miners_active ? 'Active' : 'Inactive';
+            
+            document.getElementById('miner-wattage').textContent = 
+                `${state.miner_wattage.toFixed(0)} W`;
+            
+            document.getElementById('last-action').textContent = 
+                state.last_action || 'No recent actions';
+
+            // Update temperature
+            document.getElementById('room-temp').textContent = 
+                `${state.room_temp.toFixed(1)}°C`;
+            
+            document.getElementById('room-humidity').textContent = 
+                `${state.room_humidity.toFixed(0)}%`;
+
+            // Update temperature gauge
+            updateTemperatureGauge(state.room_temp);
+
+            // Update fan status
+            document.getElementById('fans-active').textContent = 
+                state.fans_active ? 'Running' : 'Off';
+            
+            document.getElementById('fan-wattage').textContent = 
+                `${state.fan_wattage.toFixed(0)} W`;
+
+            // Update system status indicators
+            updateStatusIndicators(state);
+
+            // Update alerts
+            updateAlerts(state.alerts);
+
+            // Update log entries
+            updateLogEntries();
+
+            // Update last updated time
+            document.getElementById('last-updated-time').textContent = 
+                new Date().toLocaleString();
+        }
+
+        // Update temperature gauge visual
+        function updateTemperatureGauge(temp) {
+            const gauge = document.getElementById('temp-bar');
+            const percentage = Math.min((temp / 40) * 100, 100); // Scale to 40°C max
+            
+            gauge.style.width = `${percentage}%`;
+            
+            if (temp < 25) {
+                gauge.className = 'temp-bar temp-normal';
+            } else if (temp < 35) {
+                gauge.className = 'temp-bar temp-warning';
+            } else {
+                gauge.className = 'temp-bar temp-critical';
+            }
+        }
+
+        // Update status indicators
+        function updateStatusIndicators(state) {
+            const powerStatus = document.getElementById('power-status');
+            const minersStatus = document.getElementById('miners-status');
+            
+            if (state.power_signal) {
+                powerStatus.textContent = 'POWER AVAILABLE';
+                powerStatus.className = 'status-indicator status-online';
+            } else {
+                powerStatus.textContent = 'POWER CURTAILED';
+                powerStatus.className = 'status-indicator status-warning';
+            }
+            
+            if (state.miners_active) {
+                minersStatus.textContent = 'MINERS ACTIVE';
+                minersStatus.className = 'status-indicator status-online';
+            } else {
+                minersStatus.textContent = 'MINERS INACTIVE';
+                minersStatus.className = 'status-indicator status-offline';
+            }
+
+            // Update alert count
+            document.getElementById('active-alerts').textContent = state.alerts.length;
+        }
+
+        // Update alerts section
+        function updateAlerts(alerts) {
+            const container = document.getElementById('alerts-container');
+            
+            if (alerts.length === 0) {
+                container.innerHTML = '<div class="alert alert-info"><strong>System Status:</strong> All systems operational. No active alerts.</div>';
+                return;
+            }
+            
+            container.innerHTML = alerts.map(alert => {
+                const type = alert.includes('Critical') || alert.includes('Emergency') ? 'error' : 'warning';
+                return `<div class="alert alert-${type}"><strong>Alert:</strong> ${alert}</div>`;
+            }).join('');
+        }
+
+        // Update log entries
+        function updateLogEntries() {
+            // This would typically load from the database
+            // For now, we'll simulate some log entries
+            const logContainer = document.getElementById('log-container');
+            const currentTime = new Date().toLocaleTimeString();
+            
+            // Keep only the last 10 entries
+            const entries = logContainer.children;
+            if (entries.length > 10) {
+                logContainer.removeChild(entries[entries.length - 1]);
+            }
+        }
+
+        // Show connection error
+        function showConnectionError() {
+            const container = document.getElementById('alerts-container');
+            container.innerHTML = '<div class="alert alert-error"><strong>Connection Error:</strong> Unable to connect to mine controller. Check system status.</div>';
+        }
+
+        // Debug control functions
+        function controlMiners(turnOn) {
+            if (!debugMode) return;
+            
+            fetch('/api/control/miners', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({action: turnOn ? 'start' : 'stop'})
+            }).then(response => {
+                if (response.ok) {
+                    addLogEntry(`Miners ${turnOn ? 'started' : 'stopped'} via debug control`);
+                }
+            }).catch(console.error);
+        }
+
+        function controlFans(mode) {
+            if (!debugMode) return;
+            
+            fetch('/api/control/fans', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({mode: mode})
+            }).then(response => {
+                if (response.ok) {
+                    addLogEntry(`Fans set to ${mode} via debug control`);
+                }
+            }).catch(console.error);
+        }
+
+        function sendTestAlert() {
+            if (!debugMode) return;
+            
+            fetch('/api/test/alert', {
+                method: 'POST'
+            }).then(response => {
+                if (response.ok) {
+                    addLogEntry('Test alert sent');
+                }
+            }).catch(console.error);
+        }
+
+        function forceRefresh() {
+            loadDashboardData();
+            addLogEntry('Dashboard refreshed manually');
+        }
+
+        function toggleDebugMode() {
+            debugMode = !debugMode;
+            const debugControls = document.getElementById('debug-controls');
+            debugControls.style.display = debugMode ? 'block' : 'none';
+            addLogEntry(`Debug mode ${debugMode ? 'enabled' : 'disabled'}`);
+        }
+
+        function addLogEntry(message) {
+            const logContainer = document.getElementById('log-container');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = `[${timestamp}] ${message}`;
+            logContainer.insertBefore(entry, logContainer.firstChild);
+            
+            // Keep only the last 20 entries
+            while (logContainer.children.length > 20) {
+                logContainer.removeChild(logContainer.lastChild);
+            }
+        }
+
+        function updateLastRefreshTime() {
+            setInterval(() => {
+                document.getElementById('last-updated-time').textContent = 
+                    new Date().toLocaleString();
+            }, 1000);
+        }
+
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', initDashboard);
+
+        // Add some sample data for demonstration
+        setTimeout(() => {
+            addLogEntry('Temperature reading: 24.5°C');
+            addLogEntry('Power signal check: Available');
+            addLogEntry('Fan system: Auto mode engaged');
+        }, 2000);
+    </script>
+</body>
+</html>
