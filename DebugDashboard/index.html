@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitcoin Mine Debug Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Monaco', 'Consolas', monospace;
+            background: #0d1117;
+            color: #c9d1d9;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .debug-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #21262d, #30363d);
+            border: 1px solid #30363d;
+            border-radius: 10px;
+        }
+
+        .header h1 {
+            color: #f85149;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .warning-banner {
+            background: #f85149;
+            color: #ffffff;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .debug-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .debug-panel {
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 20px;
+            transition: border-color 0.3s ease;
+        }
+
+        .debug-panel:hover {
+            border-color: #58a6ff;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .panel-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #58a6ff;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-active { background: #238636; }
+        .status-inactive { background: #f85149; }
+        .status-warning { background: #d29922; }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-label {
+            display: block;
+            margin-bottom: 5px;
+            color: #8b949e;
+            font-size: 0.9em;
+        }
+
+        .control-input {
+            width: 100%;
+            padding: 8px 12px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 5px;
+            color: #c9d1d9;
+            font-family: inherit;
+            font-size: 0.9em;
+        }
+
+        .control-input:focus {
+            outline: none;
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.3);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .debug-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .debug-button:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: #238636;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2ea043;
+        }
+
+        .btn-danger {
+            background: #da3633;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #f85149;
+        }
+
+        .btn-warning {
+            background: #bf8700;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #d29922;
+        }
+
+        .btn-secondary {
+            background: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+        }
+
+        .btn-secondary:hover {
+            background: #30363d;
+        }
+
+        .log-panel {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .log-container {
+            background: #010409;
+            border: 1px solid #21262d;
+            border-radius: 5px;
+            padding: 15px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.8em;
+            line-height: 1.4;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+
+        .log-timestamp {
+            color: #8b949e;
+        }
+
+        .log-level-info {
+            color: #58a6ff;
+        }
+
+        .log-level-warn {
+            color: #d29922;
+        }
+
+        .log-level-error {
+            color: #f85149;
+        }
+
+        .log-level-debug {
+            color: #a5a5a5;
+        }
+
+        .current-state-panel {
+            grid-column: 1 / -1;
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .state-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .state-item {
+            background: #0d1117;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #30363d;
+        }
+
+        .state-label {
+            font-size: 0.8em;
+            color: #8b949e;
+            margin-bottom: 5px;
+        }
+
+        .state-value {
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-content {
+            background: #21262d;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 500px;
+        }
+
+        .close {
+            color: #8b949e;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #c9d1d9;
+        }
+
+        .json-editor {
+            width: 100%;
+            height: 200px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 5px;
+            padding: 10px;
+            color: #c9d1d9;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9em;
+            resize: vertical;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <div class="header">
+            <h1>🔧 Bitcoin Mine Debug Dashboard</h1>
+            <div class="warning-banner">
+                ⚠️ DEBUG MODE ACTIVE - FOR TESTING ONLY ⚠️
+            </div>
+        </div>
+
+        <!-- Current State Overview -->
+        <div class="current-state-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">📊 Current System State</h2>
+                <div class="button-group">
+                    <button class="debug-button btn-secondary" onclick="refreshState()">🔄 Refresh</button>
+                    <button class="debug-button btn-warning" onclick="exportState()">📤 Export</button>
+                </div>
+            </div>
+            <div class="state-grid" id="current-state-grid">
+                <!-- State items will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <div class="debug-grid">
+            <!-- Power Control Panel -->
+            <div class="debug-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">⚡ Power Control</h2>
+                    <span class="status-dot status-active" id="power-status-dot"></span>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">Power Signal Override</label>
+                    <div class="button-group">
+                        <button class="debug-button btn-primary" onclick="setPowerSignal(true)">✅ Available</button>
+                        <button class="debug-button btn-danger" onclick="setPowerSignal(false)">❌ Curtailed</button>
+                        <button class="debug-button btn-secondary" onclick="setPowerSignal(null)">🔄 Auto</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Miner Control</label>
+                    <div class="button-group">
+                        <button class="debug-button btn-primary" onclick="controlMiners('start')">▶️ Start All</button>
+                        <button class="debug-button btn-danger" onclick="controlMiners('stop')">⏹️ Stop All</button>
+                        <button class="debug-button btn-warning" onclick="controlMiners('restart')">🔄 Restart</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Miner Wattage Override</label>
+                    <input type="number" class="control-input" id="miner-wattage" placeholder="Watts (0-1000000)" min="0" max="1000000">
+                    <button class="debug-button btn-secondary" onclick="setMinerWattage()" style="margin-top: 5px;">Set Wattage</button>
+                </div>
+            </div>
+
+            <!-- Temperature Control Panel -->
+            <div class="debug-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">🌡️ Temperature Control</h2>
+                    <span class="status-dot status-active" id="temp-status-dot"></span>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Room Temperature Override (°C)</label>
+                    <input type="number" class="control-input" id="room-temp" placeholder="Temperature" min="-10" max="60" step="0.1">
+                    <button class="debug-button btn-secondary" onclick="setTemperature()" style="margin-top: 5px;">Set Temperature</button>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Humidity Override (%)</label>
+                    <input type="number" class="control-input" id="room-humidity" placeholder="Humidity" min="0" max="100" step="1">
+                    <button class="debug-button btn-secondary" onclick="setHumidity()" style="margin-top: 5px;">Set Humidity</button>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Temperature Scenarios</label>
+                    <div class="button-group">
+                        <button class="debug-button btn-primary" onclick="setTempScenario('normal')">🟢 Normal (25°C)</button>
+                        <button class="debug-button btn-warning" onclick="setTempScenario('high')">🟡 High (35°C)</button>
+                        <button class="debug-button btn-danger" onclick="setTempScenario('critical')">🔴 Critical (40°C)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fan Control Panel -->
+            <div class="debug-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">💨 Fan Control</h2>
+                    <span class="status-dot status-inactive" id="fan-status-dot"></span>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Fan Bank Control</label>
+                    <div class="button-group">
+                        <button class="debug-button btn-primary" onclick="controlFans('all')">🌪️ All On</button>
+                        <button class="debug-button btn-warning" onclick="controlFans('half')">🌀 Half Speed</button>
+                        <button class="debug-button btn-secondary" onclick="controlFans('auto')">🔄 Auto</button>
+                        <button class="debug-button btn-danger" onclick="controlFans('off')">⏹️ All Off</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Individual Fan Control (1-9)</label>
+                    <div class="button-group" id="individual-fans">
+                        <!-- Fan buttons will be generated by JavaScript -->
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Fan Wattage Override</label>
+                    <input type="number" class="control-input" id="fan-wattage" placeholder="Watts (0-10000)" min="0" max="10000">
+                    <button class="debug-button btn-secondary" onclick="setFanWattage()" style="margin-top: 5px;">Set Wattage</button>
+                </div>
+            </div>
+
+            <!-- Alert & Notification Panel -->
+            <div class="debug-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">🚨 Alerts & Notifications</h2>
+                    <span class="status-dot status-warning" id="alert-status-dot"></span>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Test Notifications</label>
+                    <div class="button-group">
+                        <button class="debug-button btn-primary" onclick="sendTestNotification('heartbeat')">💓 Heartbeat</button>
+                        <button class="debug-button btn-warning" onclick="sendTestNotification('warning')">⚠️ Warning</button>
+                        <button class="debug-button btn-danger" onclick="sendTestNotification('emergency')">🚨 Emergency</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Add Custom Alert</label>
+                    <input type="text" class="control-input" id="custom-alert" placeholder="Enter alert message">
+                    <div class="button-group" style="margin-top: 5px;">
+                        <button class="debug-button btn-warning" onclick="addAlert('warning')">⚠️ Warning</button>
+                        <button class="debug-button btn-danger" onclick="addAlert('error')">❌ Error</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">System Actions</label>
+                    <div class="button-group">
+                        <button class="debug-button btn-secondary" onclick="clearAllAlerts()">🧹 Clear Alerts</button>
+                        <button class="debug-button btn-warning" onclick="simulateFailure()">💥 Simulate Failure</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Control Panel -->
+            <div class="debug-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">⚙️ System Control</h2>
+                    <span class="status-dot status-active" id="system-status-dot"></span>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Loop Control</label>
+                    <div class="button-group">
+                        <button class="debug-button btn-primary" onclick="triggerLoop()">▶️ Run Loop</button>
+                        <button class="debug-button btn-warning" onclick="pauseLoop()">⏸️ Pause</button>
+                        <button class="debug-button btn-secondary" onclick="resumeLoop()">▶️ Resume</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Loop Interval Override (minutes)</label>
+                    <input type="number" class="control-input" id="loop-interval" placeholder="Minutes" min="1" max="60">
+                    <button class="debug-button btn-secondary" onclick="setLoopInterval()" style="margin-top: 5px;">Set Interval</button>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Database Actions</label>
+                    <div class="button-group">
+                        <button class="debug-button btn-secondary" onclick="exportData()">📤 Export Data</button>
+                        <button class="debug-button btn-warning" onclick="clearOldData()">🗑️ Clear Old Data</button>
+                        <button class="debug-button btn-danger" onclick="resetDatabase()">🔄 Reset DB</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Raw State Editor Panel -->
+            <div class="debug-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">📝 Raw State Editor</h2>
+                    <span class="status-dot status-warning" id="editor-status-dot"></span>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Direct State Manipulation</label>
+                    <button class="debug-button btn-warning" onclick="openStateEditor()">✏️ Edit Raw State</button>
+                    <button class="debug-button btn-secondary" onclick="loadStatePreset()">📋 Load Preset</button>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">State Presets</label>
+                    <div class="button-group">
+                        <button class="debug-button btn-primary" onclick="loadPreset('normal')">🟢 Normal Operation</button>
+                        <button class="debug-button btn-warning" onclick="loadPreset('maintenance')">🔧 Maintenance Mode</button>
+                        <button class="debug-button btn-danger" onclick="loadPreset('emergency')">🚨 Emergency Shutdown</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debug Log Panel -->
+        <div class="log-panel">
+            <div class="log-header">
+                <h2 class="panel-title">📜 Debug Log</h2>
+                <div class="button-group">
+                    <button class="debug-button btn-secondary" onclick="clearLog()">🧹 Clear</button>
+                    <button class="debug-button btn-secondary" onclick="exportLog()">📤 Export</button>
+                    <button class="debug-button btn-secondary" onclick="toggleAutoScroll()">📜 Auto-scroll</button>
+                </div>
+            </div>
+            <div class="log-container" id="debug-log">
+                <div class="log-entry">
+                    <span class="log-timestamp">[2024-01-15 10:30:00]</span>
+                    <span class="log-level-info">[INFO]</span>
+                    Debug dashboard initialized
+                </div>
+                <div class="log-entry">
+                    <span class="log-timestamp">[2024-01-15 10:30:01]</span>
+                    <span class="log-level-info">[INFO]</span>
+                    Connected to mine con
